@@ -5,7 +5,20 @@ import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
 import googleapiclient.errors
 
-
+class QuotaTracker:
+    def __init__(self, quota_limit=10000, warn_threshold = 7500):
+        self.quota_limit = quota_limit
+        self.warn_threshold = warn_threshold
+        self.counter = 0
+    def increment(self, quota_cost):
+        if self.counter + quota_cost < self.warn_threshold:
+            self.counter += quota_cost
+            print(f"+{quota_cost} Quota usage: {self.counter}")
+        elif self.counter + quota_cost < self.quota_limit:
+            raise Exception(f"Quota limit has reached {self.warn_threshold}")
+        else:
+            raise Exception(f"Quota limit has reached {self.quota_limit}")
+        
 
 def connect_to_yt(scope_list):
     # Disable OAuthlib's HTTPS verification when running locally.
@@ -23,6 +36,8 @@ def connect_to_yt(scope_list):
     credentials = flow.run_local_server(port=0)
     youtube = build(
         api_service_name, api_version, credentials=credentials)
+    q = QuotaTracker(10000,7500)
+    setattr(youtube, "quota_tracker", q)
     
     return(youtube)
 
@@ -34,7 +49,7 @@ def get_playlist_id(yt_service, search_txt):
         mine=True
     )
     response = request.execute()
-    #QUOTA_COUNTER += 1
+    yt_service.quota_tracker.increment(1)
     
     r_items = response['items']
     pl_names = [item["snippet"]["title"] for item in r_items]
@@ -51,7 +66,8 @@ def get_playlist_id(yt_service, search_txt):
                  }
         )
         response = request.execute()
-        #QUOTA_COUNTER += 50
+        yt_service.quota_tracker.increment(50)
+        
         
         playlist_id = response["id"]
         print(f'Created new playlist "{search_txt}"')
@@ -65,7 +81,7 @@ def search_for_track(yt_service, search_txt):
         q=search_txt
     )
     response = request.execute()
-    #QUOTA_COUNTER += 100
+    yt_service.quota_tracker.increment(100)
     
     search_list = response["items"]
     return(search_list)
@@ -85,7 +101,7 @@ def add_track_to_playlist(yt_service, playlist_id, track_id):
         }
     )
     response = request.execute()
-    #QUOTA_COUNTER += 50
+    yt_service.quota_tracker.increment(50)
     
     return(response)
    
@@ -101,7 +117,7 @@ if __name__ == '__main__':
     track_searchListResponse = search_for_track(yt_service, search_txt)
     trackvid_id = track_searchListResponse[0]["id"]["videoId"]
     add_track_to_playlist(yt_service, plist_id, trackvid_id)
-    
+
     
     
 # search_for_track() :   
