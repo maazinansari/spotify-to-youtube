@@ -4,8 +4,12 @@ import spotipy.util as util
 import re
 import pprint as pp
 
-def get_sp_playlist(token, username, playlist_name):
-    search_list = {}
+def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_offset = 0, max_tracks = None):
+    track_list = {}
+    no_more_pages = False
+    page_counter = 0
+    duplicate_counter = 0
+    
     if token:
         sp = spotipy.Spotify(auth=token)
         sp.trace = False
@@ -20,14 +24,18 @@ def get_sp_playlist(token, username, playlist_name):
             print(f'Playlist "{playlist_name}" was found')
         else:
             sys.exit(f'Playlist "{playlist_name}" not found')
-    
-        sp_plitems = sp.playlist_items(
-            pl_id, 
-            fields="total,limit,next,offset,items(added_at,track(id,artists,name,duration_ms,album(name,release_date)))", 
-            limit=3, 
-            offset=0
-            )
-        # pp.pprint(sp_plitems["items"])
+        
+        while not no_more_pages:
+            
+            sp_plitems = sp.playlist_items(
+                pl_id, 
+                fields="total,limit,next,offset,items(added_at,track(id,artists,name,duration_ms,album(name,release_date)))", 
+                limit=page_item_limit, 
+                offset=item_offset
+                )
+            #pp.pprint(sp_plitems)
+            
+# {'items':          
 #   [{'added_at': '2021-03-14T02:39:01Z',
 #     'track': {
 #           'album': {'name': 'Quítate las Gafas',
@@ -52,19 +60,41 @@ def get_sp_playlist(token, username, playlist_name):
 #                        'uri': 'spotify:artist:75FnCoo4FBxH5K1Rrx0k5A'}],
 #           'duration_ms': 222773,
 #           'id': '4u26EevCNXMhlvE1xFBJwX',
-#           'name': 'If I Die Young'}}]
-        for item in sp_plitems["items"]:
-            t = item["track"]
-            track_id = t["id"]
-            track_name = t["name"]
-            main_artist = t["artists"][0]["name"]
-            duration_ms = t["duration_ms"]
-            search_txt = f"{main_artist.upper()} - {track_name.upper()}"
-            search_list[track_id] = {
-                "search_txt" : search_txt,
-                "duration_ms" : duration_ms
-            }
-        return(search_list)
+#           'name': 'If I Die Young'}}],
+# 'limit': 20,
+# 'next': None,
+# 'offset': 900,
+# 'total': 904}
+            for item in sp_plitems["items"]:
+                t = item["track"]
+                track_id = t["id"]
+                track_name = t["name"]
+                main_artist = t["artists"][0]["name"]
+                duration_ms = t["duration_ms"]
+                search_txt = f"{main_artist.upper()} - {track_name.upper()}"
+                
+                if track_id in track_list:
+                    duplicate_counter += 1
+                    track_id = f"{track_id}_{duplicate_counter}"
+                
+                track_list[track_id] = {
+                    "search_txt" : search_txt,
+                    "duration_ms" : duration_ms
+                }
+                if max_tracks and len(track_list) >= max_tracks:
+                    print(f"{len(track_list)} tracks in track_list")
+                    no_more_pages = True
+                    break
+            
+            print(f"======================={len(track_list)}==========================")
+            no_more_pages = True if sp_plitems["next"] is None else no_more_pages
+            #no_more_pages = True if len(sp_plitems["items"]) < page_item_limit else False
+            #no_more_pages = True if len(track_list) > 35 else False
+            page_counter += 1
+            item_offset = page_counter * page_item_limit
+                  
+        return(track_list)
+        
 if __name__ == "__main__":
     sp_scope = "playlist-read-private"
     sp_username = "maazin5"
@@ -72,7 +102,7 @@ if __name__ == "__main__":
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
     # create search list from sp playlist 
-    x = get_sp_playlist(token, sp_username, sp_plname)
+    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 550, max_tracks = 2)
     pp.pprint(x)
     # create yt playlist from search list
     print("ABC XYZ")
