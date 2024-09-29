@@ -66,6 +66,7 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
 # 'offset': 900,
 # 'total': 904}
             for item in sp_plitems["items"]:
+                date_added = item["added_at"]
                 t = item["track"]
                 track_id = t["id"]
                 track_name = t["name"]
@@ -79,7 +80,8 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
                 
                 track_list[track_id] = {
                     "search_txt" : search_txt,
-                    "duration_ms" : duration_ms
+                    "duration_ms" : duration_ms,
+                    "date_added" : date_added
                 }
                 if max_tracks and len(track_list) >= max_tracks:
                     print(f"{len(track_list)} tracks in track_list")
@@ -94,6 +96,11 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
             item_offset = page_counter * page_item_limit
                   
         return(track_list)
+
+def sort_track_list(track_list, sort_key = "date_added", descending = True):
+    sorted_list = sorted(track_list, key=lambda t: t[sort_key], reverse = descending)
+    sorted_tracks = [t["search_txt"] for t in sorted_list]
+    return(sorted_tracks)
         
 if __name__ == "__main__":
     sp_scope = "playlist-read-private"
@@ -102,7 +109,9 @@ if __name__ == "__main__":
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
     # create search list from sp playlist 
-    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 550, max_tracks = 2)
-    pp.pprint(x)
+    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 0, max_tracks = 25)
+    #pp.pprint(x)
+    y = sort_track_list(x.values())
+    pp.pprint(y)
     # create yt playlist from search list
     print("ABC XYZ")
