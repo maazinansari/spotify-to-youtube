@@ -86,13 +86,13 @@ def search_for_track(yt_service, search_txt):
     search_list = response["items"]
     return(search_list)
 
-def add_track_to_playlist(yt_service, playlist_id, track_id):
+def add_track_to_playlist(yt_service, playlist_id, track_id, position = None):
     request = yt_service.playlistItems().insert(
         part="snippet",
         body={
           "snippet": {
             "playlistId": playlist_id,
-            "position": 0,
+            "position": position,
             "resourceId": {
               "kind": "youtube#video",
               "videoId": track_id
@@ -106,7 +106,7 @@ def add_track_to_playlist(yt_service, playlist_id, track_id):
     return(response)
    
 if __name__ == '__main__':
-    search_txt = "THE KILLERS - MR. BRIGHTSIDE"
+    search_txt = "THE KILLERS - MISS ATOMIC BOMB"
     scopes = [
         #"https://www.googleapis.com/auth/youtube.readonly",
         "https://www.googleapis.com/auth/youtube"
