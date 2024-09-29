@@ -78,7 +78,10 @@ def search_for_track(yt_service, search_txt):
     request = yt_service.search().list(
         part="snippet",
         maxResults=3,
-        q=search_txt
+        q=search_txt,
+        regionCode="US",
+        safeSearch="none",
+        type="video"
     )
     response = request.execute()
     yt_service.quota_tracker.increment(100)
@@ -106,7 +109,7 @@ def add_track_to_playlist(yt_service, playlist_id, track_id, position = None):
     return(response)
    
 if __name__ == '__main__':
-    search_txt = "THE KILLERS - MISS ATOMIC BOMB"
+    search_txt = "MORAT - BESOS EN GUERRA"
     scopes = [
         #"https://www.googleapis.com/auth/youtube.readonly",
         "https://www.googleapis.com/auth/youtube"
@@ -115,8 +118,9 @@ if __name__ == '__main__':
     yt_service = connect_to_yt(scopes)
     plist_id = get_playlist_id(yt_service, "BIG TEST")
     track_searchListResponse = search_for_track(yt_service, search_txt)
-    trackvid_id = track_searchListResponse[0]["id"]["videoId"]
-    add_track_to_playlist(yt_service, plist_id, trackvid_id)
+    pp.pprint(track_searchListResponse[0])
+    #trackvid_id = track_searchListResponse[0]["id"]["videoId"]
+    #add_track_to_playlist(yt_service, plist_id, trackvid_id)
 
     
     
