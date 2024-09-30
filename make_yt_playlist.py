@@ -107,20 +107,40 @@ def add_track_to_playlist(yt_service, playlist_id, track_id, position = None):
     yt_service.quota_tracker.increment(50)
     
     return(response)
-   
+
+def list_playlist_items(yt_service, playlist_id, count = 10):
+    request = yt_service.playlistItems().list(
+        part="snippet",
+        playlistId=playlist_id,
+        maxResults=count
+    )
+    response = request.execute()
+    yt_service.quota_tracker.increment(1)
+    playlist_vids = [
+            {
+            "name": vid["snippet"]["title"],
+            "id": vid["snippet"]["resourceId"]["videoId"]
+            } 
+            for vid in response["items"]
+        ]
+    return(playlist_vids)
+    
 if __name__ == '__main__':
-    search_txt = "MORAT - BESOS EN GUERRA"
+    search_txt = "ALVVAYS - ARCHIE, MARRY ME"
     scopes = [
         #"https://www.googleapis.com/auth/youtube.readonly",
         "https://www.googleapis.com/auth/youtube"
         ]
 
     yt_service = connect_to_yt(scopes)
-    plist_id = get_playlist_id(yt_service, "BIG TEST")
-    track_searchListResponse = search_for_track(yt_service, search_txt)
-    pp.pprint(track_searchListResponse[0])
+    #plist_id = get_playlist_id(yt_service, "BIG TEST")
+    #track_searchListResponse = search_for_track(yt_service, search_txt)
+    #pp.pprint(track_searchListResponse[0])
     #trackvid_id = track_searchListResponse[0]["id"]["videoId"]
     #add_track_to_playlist(yt_service, plist_id, trackvid_id)
+    x = list_playlist_items(yt_service, "RDMM", 10)
+    pp.pprint(x)
+    
 
     
     
