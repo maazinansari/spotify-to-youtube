@@ -13,7 +13,7 @@ class QuotaTracker:
     def increment(self, quota_cost):
         if self.counter + quota_cost < self.warn_threshold:
             self.counter += quota_cost
-            print(f"+{quota_cost} Quota usage: {self.counter}")
+            #print(f"+{quota_cost} Quota usage: {self.counter}")
         elif self.counter + quota_cost < self.quota_limit:
             raise Exception(f"Quota limit has reached {self.warn_threshold}")
         else:
