@@ -9,6 +9,7 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
     no_more_pages = False
     page_counter = 0
     duplicate_counter = 0
+    initial_offset = item_offset
     
     if token:
         sp = spotipy.Spotify(auth=token)
@@ -93,7 +94,7 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
             #no_more_pages = True if len(sp_plitems["items"]) < page_item_limit else False
             #no_more_pages = True if len(track_list) > 35 else False
             page_counter += 1
-            item_offset = page_counter * page_item_limit
+            item_offset = initial_offset + page_counter * page_item_limit
                   
         return(track_list)
 
@@ -109,7 +110,7 @@ if __name__ == "__main__":
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
     # create search list from sp playlist 
-    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 0, max_tracks = 25)
+    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 65, max_tracks = 100)
     #pp.pprint(x)
     y = sort_track_list(x.values())
     pp.pprint(y)
