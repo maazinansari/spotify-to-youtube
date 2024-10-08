@@ -3,6 +3,8 @@ import make_yt_playlist as yt
 import spotipy.util as util
 import pprint as pp
 import time
+import json
+import os
 
 def check_search_result(search_result, keywords):
     search_result_upper = search_result.upper()
@@ -11,14 +13,27 @@ def check_search_result(search_result, keywords):
             return(True)
     return(False)
     
+def write_dict(d, filename = "existing_trackvids.txt"):
+    with open(filename, "w") as file: 
+        json.dump(d, file)
+    return
+    
+def read_dict(filename = "existing_trackvids.txt"):
+    if  os.path.exists(filename):
+        with open(filename, "r") as file: 
+            d = json.load(file)
+    else:
+        d = {}
+    return(d)
+    
 if __name__ == "__main__":
     sp_scope = "playlist-read-private"
     sp_username = "maazin5"
     sp_plname = "SPOTIPY TEST"
     yt_scopes = ["https://www.googleapis.com/auth/youtube"]
-    yt_playlist = "BIG TEST"
-    sp_item_offset = 119 # start from +1 the last index of the previous run
-    search_keywords = ["LIVE", "CONCERT", "PERFORM"]
+    yt_playlist = "BIG 1"
+    sp_item_offset = 0 # start from +1 the last index of the previous run
+    flag_keywords = ["LIVE", "CONCERT", "PERFORM"]
     
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
@@ -28,7 +43,7 @@ if __name__ == "__main__":
     time.sleep(5)
     # create yt playlist from search list
     plist_id = yt.get_playlist_id(yt_service, yt_playlist)
-    
+    print(yt_service.quota_tracker.counter)
     # create search list from sp playlist 
     x = sp.get_sp_playlist(token,
                            sp_username,
@@ -37,10 +52,10 @@ if __name__ == "__main__":
                            item_offset = sp_item_offset,
                            max_tracks = 60
                            )
-    pp.pprint(x)
+    #pp.pprint(x)
     y = sp.sort_track_list(x.values())
     
-    existing_trackvids = {}
+    existing_trackvids = read_dict()
     try:
         for i,search_txt in enumerate(y):
             if search_txt in existing_trackvids:
@@ -55,10 +70,10 @@ if __name__ == "__main__":
                                                     "videoId": trackvid_id,
                                                     "title" : trackvid_title
                                                     }
-            flagged_title = check_search_result(trackvid_title, search_keywords)
+            flagged_title = check_search_result(trackvid_title, flag_keywords)
             if flagged_title:
                 print(f'''!!!!!
-                {i+sp_item_offset} : "{search_txt}" --> 
+                "{search_txt}" --> 
                                     "{trackvid_title}"
                 '''
                 )
@@ -69,4 +84,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        write_dict(existing_trackvids)
         print("main.py done")
