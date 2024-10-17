@@ -10,6 +10,7 @@ class QuotaTracker:
         self.quota_limit = quota_limit
         self.warn_threshold = warn_threshold
         self.counter = 0
+        assert self.warn_threshold <= self.quota_limit, f"warn_threshold ({self.warn_threshold}) must be less than or equal to quota_limit ({self.quota_limit})"
     def increment(self, quota_cost):
         if self.counter + quota_cost < self.warn_threshold:
             self.counter += quota_cost
@@ -20,7 +21,7 @@ class QuotaTracker:
             raise Exception(f"Quota limit has reached {self.quota_limit}")
         
 
-def connect_to_yt(scope_list):
+def connect_to_yt(scope_list, warn_threshold = 7500):
     # Disable OAuthlib's HTTPS verification when running locally.
     # *DO NOT* leave this option enabled in production.
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -36,7 +37,7 @@ def connect_to_yt(scope_list):
     credentials = flow.run_local_server(port=0)
     youtube = build(
         api_service_name, api_version, credentials=credentials)
-    q = QuotaTracker(10000,7500)
+    q = QuotaTracker(10000,warn_threshold)
     setattr(youtube, "quota_tracker", q)
     
     return(youtube)
@@ -138,7 +139,8 @@ if __name__ == '__main__':
     #pp.pprint(track_searchListResponse[0])
     #trackvid_id = track_searchListResponse[0]["id"]["videoId"]
     #add_track_to_playlist(yt_service, plist_id, trackvid_id)
-    x = list_playlist_items(yt_service, "RDMM", 10)
+    playlist_id = "RDMM" 
+    x = list_playlist_items(yt_service, playlist_id, 25)
     pp.pprint(x)
     
 
