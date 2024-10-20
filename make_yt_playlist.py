@@ -110,6 +110,9 @@ def add_track_to_playlist(yt_service, playlist_id, track_id, position = None):
     return(response)
 
 def list_playlist_items(yt_service, playlist_id, count = 10):
+    count_init = count
+    if count > 50:
+        count = 50
     request = yt_service.playlistItems().list(
         part="snippet",
         playlistId=playlist_id,
@@ -120,13 +123,37 @@ def list_playlist_items(yt_service, playlist_id, count = 10):
     playlist_vids = [
             {
             "name": vid["snippet"]["title"],
-            "id": vid["snippet"]["resourceId"]["videoId"]
+            "id": vid["snippet"]["resourceId"]["videoId"],
+            "position": vid["snippet"]["position"]
             } 
             for vid in response["items"]
         ]
+    no_more_pages = True if len(playlist_vids) == count_init else False
+    while not no_more_pages:
+        print(f"!!!!!!!!!!!!!!!     {len(playlist_vids)}     !!!!!!!!!!!!!!!!!!!")
+        nextPageToken = response["nextPageToken"]
+        request = yt_service.playlistItems().list(
+            part="snippet",
+            playlistId=playlist_id,
+            pageToken = nextPageToken
+        )
+        response = request.execute()
+        yt_service.quota_tracker.increment(1)
+        playlist_vids_next = [
+            {
+            "name": vid["snippet"]["title"],
+            "id": vid["snippet"]["resourceId"]["videoId"],
+            "position": vid["snippet"]["position"]
+            } 
+            for vid in response["items"]
+        ]
+        playlist_vids.extend(playlist_vids_next)
+        if len(playlist_vids) >= count_init or "nextPageToken" not in response:
+            no_more_pages = True
     return(playlist_vids)
     
 if __name__ == '__main__':
+    import csv
     search_txt = "ALVVAYS - ARCHIE, MARRY ME"
     scopes = [
         #"https://www.googleapis.com/auth/youtube.readonly",
@@ -139,11 +166,17 @@ if __name__ == '__main__':
     #pp.pprint(track_searchListResponse[0])
     #trackvid_id = track_searchListResponse[0]["id"]["videoId"]
     #add_track_to_playlist(yt_service, plist_id, trackvid_id)
-    playlist_id = "RDMM" 
-    x = list_playlist_items(yt_service, playlist_id, 25)
-    pp.pprint(x)
-    
+    playlist_id = "PLlh37htMYim47zUcLG4XXvwPTDm2t__QM" 
+    x = list_playlist_items(yt_service, playlist_id, 500)
+    with open('big1.csv', 'w', encoding='utf8', newline='') as output_file:
+        fc = csv.DictWriter(output_file, 
+                            fieldnames=x[0].keys()
+                           )
+        fc.writeheader()
+        fc.writerows(x)
 
+    print(yt_service.quota_tracker.counter)
+    
     
     
 # search_for_track() :   
