@@ -5,7 +5,7 @@ import re
 import pprint as pp
 
 def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_offset = 0, max_tracks = None):
-    track_list = {}
+    track_list = []
     no_more_pages = False
     page_counter = 0
     duplicate_counter = 0
@@ -79,16 +79,17 @@ def get_sp_playlist(token, username, playlist_name, page_item_limit=20, item_off
                     duplicate_counter += 1
                     track_id = f"{track_id}_{duplicate_counter}"
                 
-                track_list[track_id] = {
-                    "search_txt" : search_txt,
-                    "duration_ms" : duration_ms,
-                    "date_added" : date_added
-                }
+                track_list.append(
+                    {
+                        "search_txt" : search_txt,
+                        "duration_ms" : duration_ms,
+                        "date_added" : date_added
+                    }
+                )
                 if max_tracks and len(track_list) >= max_tracks:
                     print(f"{len(track_list)} tracks in track_list")
                     no_more_pages = True
                     break
-            
             print(f"======================={len(track_list)}==========================")
             no_more_pages = True if sp_plitems["next"] is None else no_more_pages
             #no_more_pages = True if len(sp_plitems["items"]) < page_item_limit else False
@@ -102,7 +103,12 @@ def sort_track_list(track_list, sort_key = "date_added", descending = True):
     sorted_list = sorted(track_list, key=lambda t: t[sort_key], reverse = descending)
     sorted_tracks = [t["search_txt"] for t in sorted_list]
     return(sorted_tracks)
-        
+
+def write_list(list, file_name): 
+    with open(file_name, 'w') as output_file:
+        for line in list:
+            output_file.write(f"{line}\n")
+
 if __name__ == "__main__":
     sp_scope = "playlist-read-private"
     sp_username = "maazin5"
@@ -110,9 +116,9 @@ if __name__ == "__main__":
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
     # create search list from sp playlist 
-    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 65, max_tracks = 100)
-    #pp.pprint(x)
-    y = sort_track_list(x.values())
+    x = get_sp_playlist(token, sp_username, sp_plname, item_offset = 0, max_tracks = 540)
+    y = [track["search_txt"] for track in x]
+    write_list(y, "spotipytest.txt")
     pp.pprint(y)
-    # create yt playlist from search list
+
     print("ABC XYZ")

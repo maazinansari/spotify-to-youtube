@@ -32,14 +32,14 @@ if __name__ == "__main__":
     sp_plname = "SPOTIPY TEST"
     yt_scopes = ["https://www.googleapis.com/auth/youtube"]
     yt_playlist = "BIG 1"
-    sp_item_offset = 0 # start from +1 the last index of the previous run
+    sp_item_offset = 498 # start from +1 the last index of the previous run
     flag_keywords = ["LIVE", "CONCERT", "PERFORM"]
     
     # connect to spotify 
     token = util.prompt_for_user_token(sp_username, sp_scope)
     
     # connect to yt
-    yt_service = yt.connect_to_yt(yt_scopes)
+    yt_service = yt.connect_to_yt(yt_scopes, 9900)
     time.sleep(5)
     # create yt playlist from search list
     plist_id = yt.get_playlist_id(yt_service, yt_playlist)
@@ -48,16 +48,17 @@ if __name__ == "__main__":
     x = sp.get_sp_playlist(token,
                            sp_username,
                            sp_plname,
-                           page_item_limit= 5,
+                           page_item_limit= 20,
                            item_offset = sp_item_offset,
-                           max_tracks = 60
+                           max_tracks = 40
                            )
     #pp.pprint(x)
-    y = sp.sort_track_list(x.values())
+    y = x
     
     existing_trackvids = read_dict()
     try:
-        for i,search_txt in enumerate(y):
+        for i,track in enumerate(y):
+            search_txt = track["search_txt"]
             if search_txt in existing_trackvids:
                 trackvid_id = existing_trackvids[search_txt]["videoId"]
                 trackvid_title = existing_trackvids[search_txt]["title"]
